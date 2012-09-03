@@ -164,7 +164,7 @@ def greedyAdvisor(subjects, maxWork, comparator):
 
 def greedyAdvisorTime():
     """
-    Runs tests on bruteForceAdvisor and measures the time required to compute
+    Runs tests on greedyAdvisor and measures the time required to compute
     an answer.
     """
     subjects = loadSubjects(SUBJECT_FILENAME)
