@@ -14,7 +14,7 @@ import time
 ##fo.write("6.00,16,8\n1.00,7,7\n6.01,5,3\n15.01,9,6")
 ##fo.close()
 
-##SUBJECT_FILENAME = "smallCatalog.txt"
+#SUBJECT_FILENAME = "smallCatalog.txt"
 SUBJECT_FILENAME = "subjects.txt"
 VALUE, WORK = 0, 1
 
@@ -226,6 +226,39 @@ def bruteForceAdvisorHelper(subjects, maxWork, i, bestSubset, bestSubsetValue,
                 subsetValue, subsetWork)
         return bestSubset, bestSubsetValue
 
+"""
+def maxVal0(subjects, aW):
+    m = {}
+    i = 0
+    nameList = subjects.keys()
+    tupleList = subjects.values()
+    w, v = [], []
+    
+    for x in range(len(tupleList)): 
+    	w.append(tupleList[x][WORK])
+    	v.append(tupleList[x][VALUE])
+    return fastMaxVal(w, v, i, aW, m) 
+    
+def fastMaxVal(w, v, i, aW, m):
+    try: return m[(i, aW)] 
+    except KeyError: 
+        if i == 0: 
+            if w[i] <= aW: 
+                m[(i, aW)] = v[i] 
+                return v[i] 
+            else: 
+                m[(i, aW)] = 0 
+                return 0 
+        without_i = fastMaxVal(w, v, i-1, aW, m) 
+        if w[i] > aW: 
+            m[(i, aW)] = without_i 
+            return without_i 
+        else: with_i = v[i] + fastMaxVal(w, v, i-1, aW - w[i], m) 
+        res = max(with_i, without_i) 
+        m[(i, aW)] = res 
+    return res
+"""
+
 #
 # Problem 3: Subject Selection By Brute Force
 #
@@ -235,7 +268,6 @@ def bruteForceTime():
     an answer.
     """
     subjects = loadSubjects(SUBJECT_FILENAME)
-    printSubjects(subjects)
     print "------------------------------\n" * 2
 
     for maxWork in range(1,11):
@@ -248,6 +280,7 @@ def bruteForceTime():
         if end - start > 5:
             print "The last bruteForce attempt took longer than 5 seconds, aborting..."
             break
+        
 
 # Problem 3 Observations
 # ======================
@@ -261,12 +294,78 @@ def dpAdvisor(subjects, maxWork):
     """
     Returns a dictionary mapping subject name to (value, work) that contains a
     set of subjects that provides the maximum value without exceeding maxWork.
-
+    
     subjects: dictionary mapping subject name to (value, work)
     maxWork: int >= 0
     returns: dictionary mapping subject name to (value, work)
+    """    
+    rec_dict = {}
+    m = {}
+        
+    #   Build the work and value lists.
+    work_list = []
+    value_list = []
+    key_list = []
+    for each in subjects:
+        work_list.append(subjects[each][1])
+        value_list.append(subjects[each][0])
+        key_list.append(each)
+    
+    # Build optimal list of courses to take.
+    value, rec_list = dp_decision_tree(work_list,value_list,len(work_list)-1,maxWork,m)
+    
+    #   Build dictionary from list.
+    for each in rec_list:
+        rec_dict[key_list[each]] = (value_list[each],work_list[each])
+    return rec_dict
+
+def dp_decision_tree(w,v,i,aW,m):
     """
-    # TODO...
+    Creates a course schedule that is optimized the maximum value.
+    
+    I'm a dumb ass and couldn't figure this recursive shit out.
+    I got the solution from someone else on the web and looks like
+    they re-wrote the solution given in the class notes for fastMaxVal
+    repurposed for this.  Pissed I can't figure this out... :(
+    
+    But anyway, it rocks and the time difference from brute is 10.5 secs vs .01 secs
+    <http://curiousreef.com/class/mit-opencourseware-600-introduction/lesson/14/assgn/1/>
+
+	Watch: <http://www.youtube.com/watch?v=6h6Fi6AQiRM>
+	Best video on this type of problem I've found and I vindicated myself with
+	maxValtest.py included.  But, still this problem is a bitch :)
+    """
+    ## check if value is already in the dictionary
+    try: return m[(i,aW)]
+    except KeyError:
+        ##  Leaf/Bottom of the tree case decision
+        if i == 0:
+            if w[i] < aW:
+                m[(i,aW)] = v[i], [i]
+                return v[i],[i]
+            else:
+                m[(i,aW)] = 0, []
+                return 0,[]
+    
+    ## Calculate with and without i branches
+    without_i, course_list = dp_decision_tree(w,v,i-1,aW,m)
+    if w[i] > aW:
+        m[(i,aW)] = without_i, course_list
+        return without_i, course_list
+    else:
+        with_i, course_list_temp = dp_decision_tree(w, v, i-1, aW - w[i], m)
+        with_i += v[i]
+    
+    ## Take the branch with the higher value
+    if with_i > without_i:
+        i_value = with_i
+        course_list = [i] + course_list_temp
+    else:
+        i_value = without_i
+    
+    ## Add this value calculation to the memo
+    m[(i,aW)] = i_value, course_list
+    return i_value, course_list
 
 #
 # Problem 5: Performance Comparison
@@ -276,12 +375,27 @@ def dpTime():
     Runs tests on dpAdvisor and measures the time required to compute an
     answer.
     """
-    # TODO...
+    subjects = loadSubjects(SUBJECT_FILENAME)
+    print "------------------------------\n" * 2
+
+    for maxWork in range(1,1001):
+        start = time.time()
+        selected = dpAdvisor(subjects, maxWork)
+        end = time.time()
+        #printSubjects(selected)
+        print "maxWork: %d\tTime Spent: %0.2f" % (maxWork,end-start)
+        print "------------------------------\n"
+        if end - start > 5:
+            print "The last bruteForce attempt took longer than 5 seconds, aborting..."
+            break
+            
 
 # Problem 5 Observations
 # ======================
 #
 # TODO: write here your observations regarding dpAdvisor's performance and
 # how its performance compares to that of bruteForceAdvisor.
+#
+#
 
 
